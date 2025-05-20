@@ -147,6 +147,7 @@
           input.value = addr;
           document.getElementById("statusSelect").value = statusMap[addr] || "";
           dropdown.style.display = "none";
+          openMap(); // ✅ 주소 선택 시 자동 지도 열기
         };
         dropdown.appendChild(div);
       });
