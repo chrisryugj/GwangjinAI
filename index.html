@@ -136,6 +136,7 @@
       <button onclick="resetAddressList()">📂 주소 초기화</button>
       <button onclick="resetStatusMap()">🧹 상태 초기화</button>
     </div>
+    <button onclick="openMapInNewTab()">📍 네이버지도에서 열기</button>
   </div>
 
   <div id="tab-table" class="tab-content">
@@ -202,14 +203,8 @@
       if (!addr) return alert("주소를 입력하세요.");
       const baseAddr = addr.replace(/\s*\([^)]*\)\s*$/, '').trim();
       const encodedAddr = encodeURIComponent(baseAddr);
-      const ua = navigator.userAgent.toLowerCase();
-      const isMobile = /iphone|ipad|android/.test(ua);
-
-      if (isMobile) {
-        window.location.href = `intent://search/${encodedAddr}#Intent;scheme=nmap;package=com.nhn.android.nmap;end`;
-      } else {
-        window.open(`https://map.naver.com/v5/search/${encodedAddr}`, '_blank');
-      }
+      const url = `https://map.naver.com/v5/search/${encodedAddr}`;
+      window.open(url, '_blank');
     }
 
     function saveStatus() {
