@@ -135,8 +135,8 @@
       <option value="위치부적절">위치부적절</option>
     </select>
     <input id="fileUpload" type="file" accept=".txt,.csv" onchange="loadAddressFile(event)">
-    <textarea id="addrTextarea" placeholder="주소를 줄 단위로 붙여넣으세요."></textarea>
-    <button onclick="processPastedAddresses()">📋 주소 복붙 추가</button>
+    <textarea id="bulkPaste" placeholder="주소를 줄 단위로 복사해 붙여넣어 주세요."></textarea>
+    <button onclick="addFromTextarea()">📋 주소 복붙 추가</button>
     <div style="display: flex; gap: 10px;">
       <button onclick="resetAddressList()">📂 주소 초기화</button>
       <button onclick="resetStatusMap()">🧹 상태 초기화</button>
@@ -207,14 +207,7 @@
       if (!addr) return alert("주소를 입력하세요.");
       const baseAddr = addr.replace(/\s*\([^)]*\)\s*$/, '').trim();
       const encodedAddr = encodeURIComponent(baseAddr);
-      const ua = navigator.userAgent.toLowerCase();
-      const isMobile = /iphone|ipad|android/.test(ua);
-
-      if (isMobile) {
-        location.href = `intent://search/${encodedAddr}#Intent;scheme=nmap;package=com.nhn.android.nmap;end`;
-      } else {
-        window.open(`https://map.naver.com/v5/search/${encodedAddr}`, '_blank');
-      }
+      window.open(`https://map.naver.com/v5/search/${encodedAddr}`, '_blank');
     }
 
     function saveStatus() {
@@ -250,13 +243,14 @@
       reader.readAsText(file, 'UTF-8');
     }
 
-    function processPastedAddresses() {
-      const input = document.getElementById("addrTextarea").value;
+    function addFromTextarea() {
+      const input = document.getElementById("bulkPaste").value;
       if (!input) return;
       const lines = input.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const newList = lines.filter(l => !주소목록.includes(l));
       주소목록 = [...주소목록, ...newList];
-      alert(`${newList.length}개의 주소가 추가되었습니다.`);
+      alert(newList.length + "개의 주소가 추가되었습니다.");
+      document.getElementById("bulkPaste").value = "";
     }
 
     function resetAddressList() {
