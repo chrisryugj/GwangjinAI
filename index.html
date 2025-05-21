@@ -67,13 +67,6 @@
       border-radius: 6px;
       box-sizing: border-box;
     }
-    #mapFrame {
-      width: 100%;
-      height: 800px;
-      border: 1px solid #ccc;
-      margin-top: 10px;
-      border-radius: 6px;
-    }
     .dropdown-item {
       padding: 6px;
       font-size: 0.9rem;
@@ -139,7 +132,6 @@
     </select>
     <input id="fileUpload" type="file" accept=".txt,.csv" onchange="loadAddressFile(event)">
     <button onclick="promptPaste()">📋 주소 복붙 추가</button>
-    <iframe id="mapFrame" src=""></iframe>
   </div>
 
   <div id="tab-table" class="tab-content">
@@ -161,9 +153,6 @@
   <footer>
     (c) 2025 광진구청 가로경관과 개친절한 류주임
   </footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
@@ -208,7 +197,7 @@
       const addr = currentAddress || document.getElementById("addrInput").value.trim();
       if (!addr) return alert("주소를 입력하세요.");
       const baseAddr = addr.replace(/\s*\([^)]*\)\s*$/, '').trim();
-      document.getElementById("mapFrame").src = "https://map.naver.com/v5/search/" + encodeURIComponent(baseAddr);
+      window.open("https://map.naver.com/v5/search/" + encodeURIComponent(baseAddr), "_blank");
     }
 
     function saveStatus() {
