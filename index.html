@@ -17,10 +17,12 @@
       align-items: center;
       margin-bottom: 10px;
     }
+    header a {
+      text-decoration: none;
+    }
     header img {
       height: 50px;
       margin-bottom: 10px;
-      cursor: pointer;
     }
     h1 {
       font-size: 1.3rem;
@@ -67,6 +69,10 @@
       border: 1px solid #ccc;
       border-radius: 6px;
       box-sizing: border-box;
+    }
+    textarea {
+      height: 100px;
+      resize: vertical;
     }
     .dropdown-item {
       padding: 6px;
@@ -124,7 +130,7 @@
   </div>
 
   <div id="tab-manage" class="tab-content active">
-    <input id="addrInput" type="text" onfocus="this.value=''; showDropdown();" placeholder="주소 선택..." oninput="showDropdown()" onclick="showDropdown()">
+    <textarea id="addrInput" placeholder="주소를 줄 단위로 입력하세요..." oninput="showDropdown()"></textarea>
     <div id="customDropdown" style="display:none; border:1px solid #ccc; max-height:200px; overflow-y:auto; border-radius:6px;"></div>
     <select id="statusSelect" onchange="saveStatus()">
       <option value="">미선택</option>
@@ -134,7 +140,6 @@
       <option value="위치부적절">위치부적절</option>
     </select>
     <input id="fileUpload" type="file" accept=".txt,.csv" onchange="loadAddressFile(event)">
-    <textarea id="multiPasteInput" rows="5" placeholder="주소를 여러 줄로 복사해 붙여넣기..." onchange="handleMultiPaste()"></textarea>
     <div style="display: flex; gap: 10px;">
       <button onclick="resetAddressList()">📂 주소 초기화</button>
       <button onclick="resetStatusMap()">🧹 상태 초기화</button>
@@ -166,33 +171,30 @@
     let 주소목록 = [];
     let statusMap = JSON.parse(localStorage.getItem("statusMap")) || {};
     let currentAddress = null;
-    let viewedAddresses = new Set();
 
     function showTab(tabId, event) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tabs button').forEach(el => el.classList.remove('active'));
       document.getElementById('tab-' + tabId).classList.add('active');
       if (event) event.target.classList.add('active');
-      else document.querySelector(`.tabs button[onclick*="${tabId}"]`).classList.add('active');
       if (tabId === 'table') updateTable();
       if (tabId === 'stats') drawChart();
     }
 
     function showDropdown() {
       const input = document.getElementById("addrInput");
+      const lines = input.value.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
       const dropdown = document.getElementById("customDropdown");
       dropdown.innerHTML = "";
       dropdown.style.display = "block";
-      주소목록.filter(addr => addr.includes(input.value)).forEach(addr => {
+      lines.forEach(addr => {
         const div = document.createElement("div");
         div.className = "dropdown-item";
-        if (viewedAddresses.has(addr)) div.classList.add("viewed");
-        if (statusMap[addr]) div.classList.add("status-marked");
-        div.textContent = statusMap[addr] ? addr + " [" + statusMap[addr] + "]" : addr;
+        div.textContent = addr;
         div.onclick = () => {
           currentAddress = addr;
-          viewedAddresses.add(addr);
-          input.value = addr;
+          if (!주소목록.includes(addr)) 주소목록.push(addr);
+          document.getElementById("addrInput").value = addr;
           document.getElementById("statusSelect").value = statusMap[addr] || "";
           dropdown.style.display = "none";
           openMapInNewTab();
@@ -208,7 +210,6 @@
       const encodedAddr = encodeURIComponent(baseAddr);
       const ua = navigator.userAgent.toLowerCase();
       const isMobile = /iphone|ipad|android/.test(ua);
-
       if (isMobile) {
         location.href = `intent://search/${encodedAddr}#Intent;scheme=nmap;package=com.nhn.android.nmap;end`;
       } else {
@@ -247,15 +248,6 @@
         alert(`주소 파일 업로드 완료: ${lines.length}건 중 ${added}건 추가됨 (총 ${주소목록.length}건)`);
       };
       reader.readAsText(file, 'UTF-8');
-    }
-
-    function handleMultiPaste() {
-      const input = document.getElementById("multiPasteInput").value;
-      if (!input) return;
-      const lines = input.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      const newList = lines.filter(l => !주소목록.includes(l));
-      주소목록 = [...주소목록, ...newList];
-      alert(newList.length + "개의 주소가 추가되었습니다.");
     }
 
     function resetAddressList() {
