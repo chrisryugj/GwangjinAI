@@ -125,7 +125,7 @@
   </div>
 
   <div id="tab-manage" class="tab-content active">
-    <textarea id="addrInput" placeholder="주소 선택 또는 복사 붙여넣기..." oninput="showDropdown()"></textarea>
+    <input id="addrInput" type="text" onfocus="this.value=''; showDropdown();" placeholder="주소 선택..." oninput="showDropdown()" onclick="showDropdown()">
     <div id="customDropdown" style="display:none; border:1px solid #ccc; max-height:200px; overflow-y:auto; border-radius:6px;"></div>
     <select id="statusSelect" onchange="saveStatus()">
       <option value="">미선택</option>
@@ -135,7 +135,8 @@
       <option value="위치부적절">위치부적절</option>
     </select>
     <input id="fileUpload" type="file" accept=".txt,.csv" onchange="loadAddressFile(event)">
-    <button onclick="promptPaste()">📋 주소 복붙 추가</button>
+    <textarea id="pasteArea" placeholder="주소를 줄 단위로 복사해 붙여넣어 주세요."></textarea>
+    <button onclick="processPastedAddresses()">📋 주소 복붙 추가</button>
     <div style="display: flex; gap: 10px;">
       <button onclick="resetAddressList()">📂 주소 초기화</button>
       <button onclick="resetStatusMap()">🧹 상태 초기화</button>
@@ -183,8 +184,7 @@
       const dropdown = document.getElementById("customDropdown");
       dropdown.innerHTML = "";
       dropdown.style.display = "block";
-      const lines = input.value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      lines.forEach(addr => {
+      주소목록.filter(addr => addr.includes(input.value)).forEach(addr => {
         const div = document.createElement("div");
         div.className = "dropdown-item";
         if (viewedAddresses.has(addr)) div.classList.add("viewed");
@@ -214,6 +214,15 @@
       } else {
         window.open(`https://map.naver.com/v5/search/${encodedAddr}`, '_blank');
       }
+    }
+
+    function processPastedAddresses() {
+      const input = document.getElementById("pasteArea").value;
+      if (!input) return;
+      const lines = input.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const newList = lines.filter(l => !주소목록.includes(l));
+      주소목록 = [...주소목록, ...newList];
+      alert(`${newList.length}개의 주소가 추가되었습니다.`);
     }
 
     function saveStatus() {
@@ -249,15 +258,6 @@
       reader.readAsText(file, 'UTF-8');
     }
 
-    function promptPaste() {
-      const input = prompt("주소를 줄 단위로 복사해 붙여넣어 주세요:");
-      if (!input) return;
-      const lines = input.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      const newList = lines.filter(l => !주소목록.includes(l));
-      주소목록 = [...주소목록, ...newList];
-      alert(newList.length + "개의 주소가 추가되었습니다.");
-    }
-
     function resetAddressList() {
       주소목록 = [];
       currentAddress = null;
@@ -282,14 +282,14 @@
         row.innerHTML = `<td>${addr}</td><td>${status}</td>`;
         tbody.appendChild(row);
       });
-      document.getElementById("tableSummary").innerText = "총 " + 주소목록.length + "건";
+      document.getElementById("tableSummary").innerText = `총 ${주소목록.length}건`;
     }
 
     function copyTable() {
       let text = "주소\t상태\n";
       주소목록.forEach(addr => {
         const status = statusMap[addr] || "미선택";
-        text += addr + "\t" + status + "\n";
+        text += `${addr}\t${status}\n`;
       });
       navigator.clipboard.writeText(text).then(() => alert("복사 완료"));
     }
@@ -298,7 +298,7 @@
       let text = "주소\t상태\n";
       주소목록.forEach(addr => {
         const status = statusMap[addr] || "미선택";
-        text += addr + "\t" + status + "\n";
+        text += `${addr}\t${status}\n`;
       });
       const blob = new Blob([text], { type: 'text/plain' });
       const link = document.createElement("a");
