@@ -20,7 +20,6 @@
     header img {
       height: 50px;
       margin-bottom: 10px;
-      cursor: pointer;
     }
     h1 {
       font-size: 1.3rem;
@@ -69,8 +68,8 @@
       box-sizing: border-box;
     }
     textarea {
-      height: 100px;
       resize: vertical;
+      height: 100px;
     }
     .dropdown-item {
       padding: 6px;
@@ -115,7 +114,10 @@
 </head>
 <body>
   <header>
-    <img src="https://www.gwangjin.go.kr/editorUpload/images/000196/20221007110449234_IXETSNKL.png" alt="광진구 CI" onclick="goHome()">
+<img src="https://www.gwangjin.go.kr/editorUpload/images/000196/20221007110449234_IXETSNKL.png"
+     alt="광진구 CI"
+     onclick="showTab('manage', event)"
+     style="cursor: pointer;">
     <h1>차량진출입로 표지판 실태조사 도우미</h1>
   </header>
 
@@ -126,9 +128,7 @@
   </div>
 
   <div id="tab-manage" class="tab-content active">
-    <textarea id="bulkInput" placeholder="주소를 여러 줄로 복사하여 붙여넣기"></textarea>
-    <button onclick="applyBulkInput()">📋 주소 복붙 추가</button>
-    <input id="addrInput" type="text" placeholder="주소 선택..." onfocus="this.value=''; showDropdown();" oninput="showDropdown()" onclick="showDropdown()">
+    <input id="addrInput" type="text" onfocus="this.value=''; showDropdown();" placeholder="주소 선택..." oninput="showDropdown()" onclick="showDropdown()">
     <div id="customDropdown" style="display:none; border:1px solid #ccc; max-height:200px; overflow-y:auto; border-radius:6px;"></div>
     <select id="statusSelect" onchange="saveStatus()">
       <option value="">미선택</option>
@@ -138,11 +138,12 @@
       <option value="위치부적절">위치부적절</option>
     </select>
     <input id="fileUpload" type="file" accept=".txt,.csv" onchange="loadAddressFile(event)">
+    <textarea id="bulkPaste" placeholder="주소를 줄 단위로 복사해 붙여넣어 주세요."></textarea>
+    <button onclick="addFromTextarea()">📋 주소 복붙 추가</button>
     <div style="display: flex; gap: 10px;">
       <button onclick="resetAddressList()">📂 주소 초기화</button>
       <button onclick="resetStatusMap()">🧹 상태 초기화</button>
     </div>
-    <button onclick="openMapInNewTab()">📍 네이버지도에서 열기</button>
   </div>
 
   <div id="tab-table" class="tab-content">
@@ -171,13 +172,6 @@
     let statusMap = JSON.parse(localStorage.getItem("statusMap")) || {};
     let currentAddress = null;
     let viewedAddresses = new Set();
-
-    function goHome() {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tabs button').forEach(el => el.classList.remove('active'));
-      document.getElementById('tab-manage').classList.add('active');
-      document.querySelector('.tabs button').classList.add('active');
-    }
 
     function showTab(tabId, event) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -216,13 +210,7 @@
       if (!addr) return alert("주소를 입력하세요.");
       const baseAddr = addr.replace(/\s*\([^)]*\)\s*$/, '').trim();
       const encodedAddr = encodeURIComponent(baseAddr);
-      const ua = navigator.userAgent.toLowerCase();
-      const isMobile = /iphone|ipad|android/.test(ua);
-      if (isMobile) {
-        location.href = `intent://search/${encodedAddr}#Intent;scheme=nmap;package=com.nhn.android.nmap;end`;
-      } else {
-        window.open(`https://map.naver.com/v5/search/${encodedAddr}`, '_blank');
-      }
+      window.open(`https://map.naver.com/v5/search/${encodedAddr}`, '_blank');
     }
 
     function saveStatus() {
@@ -258,12 +246,14 @@
       reader.readAsText(file, 'UTF-8');
     }
 
-    function applyBulkInput() {
-      const input = document.getElementById("bulkInput").value;
-      const lines = input.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
-      const newList = lines.filter(line => !주소목록.includes(line));
+    function addFromTextarea() {
+      const input = document.getElementById("bulkPaste").value;
+      if (!input) return;
+      const lines = input.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const newList = lines.filter(l => !주소목록.includes(l));
       주소목록 = [...주소목록, ...newList];
-      alert(`${newList.length}개의 주소가 추가되었습니다.`);
+      alert(newList.length + "개의 주소가 추가되었습니다.");
+      document.getElementById("bulkPaste").value = "";
     }
 
     function resetAddressList() {
