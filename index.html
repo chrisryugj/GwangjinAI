@@ -68,10 +68,6 @@
       border-radius: 6px;
       box-sizing: border-box;
     }
-    textarea {
-      resize: vertical;
-      height: 100px;
-    }
     .dropdown-item {
       padding: 6px;
       font-size: 0.9rem;
@@ -115,7 +111,9 @@
 </head>
 <body>
   <header>
-    <img src="https://www.gwangjin.go.kr/editorUpload/images/000196/20221007110449234_IXETSNKL.png" alt="광진구 CI" onclick="showTab('manage', { target: document.querySelector('[onclick*=\'manage\']') })">
+    <a href="#" onclick="showTab('manage', event)">
+      <img src="https://www.gwangjin.go.kr/editorUpload/images/000196/20221007110449234_IXETSNKL.png" alt="광진구 CI">
+    </a>
     <h1>차량진출입로 표지판 실태조사 도우미</h1>
   </header>
 
@@ -136,7 +134,7 @@
       <option value="위치부적절">위치부적절</option>
     </select>
     <input id="fileUpload" type="file" accept=".txt,.csv" onchange="loadAddressFile(event)">
-    <textarea id="pasteArea" placeholder="주소를 여러 줄로 붙여넣기 한 후 엔터를 누르세요" onkeydown="if(event.key==='Enter'){event.preventDefault();handlePaste();}"></textarea>
+    <textarea id="multiPasteInput" rows="5" placeholder="주소를 여러 줄로 복사해 붙여넣기..." onchange="handleMultiPaste()"></textarea>
     <div style="display: flex; gap: 10px;">
       <button onclick="resetAddressList()">📂 주소 초기화</button>
       <button onclick="resetStatusMap()">🧹 상태 초기화</button>
@@ -175,6 +173,7 @@
       document.querySelectorAll('.tabs button').forEach(el => el.classList.remove('active'));
       document.getElementById('tab-' + tabId).classList.add('active');
       if (event) event.target.classList.add('active');
+      else document.querySelector(`.tabs button[onclick*="${tabId}"]`).classList.add('active');
       if (tabId === 'table') updateTable();
       if (tabId === 'stats') drawChart();
     }
@@ -211,7 +210,7 @@
       const isMobile = /iphone|ipad|android/.test(ua);
 
       if (isMobile) {
-        window.location.href = `intent://search/${encodedAddr}#Intent;scheme=nmap;package=com.nhn.android.nmap;end`;
+        location.href = `intent://search/${encodedAddr}#Intent;scheme=nmap;package=com.nhn.android.nmap;end`;
       } else {
         window.open(`https://map.naver.com/v5/search/${encodedAddr}`, '_blank');
       }
@@ -231,34 +230,32 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const lines = e.target.result.split(/\r?\n/).filter(line => line.trim());
-        processLines(lines);
+        const newList = [];
+        let added = 0;
+        lines.forEach(line => {
+          const [addr, status] = line.split('\t');
+          const trimmedAddr = addr?.trim();
+          if (trimmedAddr && !주소목록.includes(trimmedAddr)) {
+            newList.push(trimmedAddr);
+            if (status) statusMap[trimmedAddr] = status.trim();
+            added++;
+          } else if (trimmedAddr && status) {
+            statusMap[trimmedAddr] = status.trim();
+          }
+        });
+        주소목록 = [...주소목록, ...newList];
+        alert(`주소 파일 업로드 완료: ${lines.length}건 중 ${added}건 추가됨 (총 ${주소목록.length}건)`);
       };
       reader.readAsText(file, 'UTF-8');
     }
 
-    function handlePaste() {
-      const input = document.getElementById("pasteArea").value;
+    function handleMultiPaste() {
+      const input = document.getElementById("multiPasteInput").value;
+      if (!input) return;
       const lines = input.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      processLines(lines);
-      document.getElementById("pasteArea").value = '';
-    }
-
-    function processLines(lines) {
-      const newList = [];
-      let added = 0;
-      lines.forEach(line => {
-        const [addr, status] = line.split('\t');
-        const trimmedAddr = addr?.trim();
-        if (trimmedAddr && !주소목록.includes(trimmedAddr)) {
-          newList.push(trimmedAddr);
-          if (status) statusMap[trimmedAddr] = status.trim();
-          added++;
-        } else if (trimmedAddr && status) {
-          statusMap[trimmedAddr] = status.trim();
-        }
-      });
+      const newList = lines.filter(l => !주소목록.includes(l));
       주소목록 = [...주소목록, ...newList];
-      alert(`${newList.length}개의 주소가 추가되었습니다.`);
+      alert(newList.length + "개의 주소가 추가되었습니다.");
     }
 
     function resetAddressList() {
