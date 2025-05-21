@@ -225,7 +225,7 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(e) {
-        const lines = e.target.result.split(/\r?\n/).filter(line => line.trim());
+        const lines = e.target.result.replace(/\r\n/g, '\n').split('\n').filter(line => line.trim());
         const newList = [];
         let added = 0;
         lines.forEach(line => {
@@ -248,7 +248,7 @@
     function promptPaste() {
       const input = prompt("주소를 줄 단위로 복사해 붙여넣어 주세요:");
       if (!input) return;
-      const lines = input.split(/\r?\n|\u2028|\u2029/).map(l => l.trim()).filter(Boolean);
+      const lines = input.replace(/\r\n/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
       const newList = lines.filter(l => !주소목록.includes(l));
       주소목록 = [...주소목록, ...newList];
       alert(newList.length + "개의 주소가 추가되었습니다.");
